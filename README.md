@@ -115,7 +115,7 @@ Dave Moten came across the Engine821 fork and
 * set up pom.xml for release under the `com.github.davidmoten:subethasmtp` artifact 
 * released to Maven Central
 * submitted the changes back to the Engine821.com fork (apart from the groupId change and release changes). Note that review/merge of changes does not seem to be forthcoming. 
-* added multi-JDK continuous integration using Travis
+* added multi-JDK continuous integration using Travis (now using Github Actions)
 * added code coverage using coverage.io
 * added round trip unit test of STARTTLS
 * removed MigBase64 because is complex code without unit tests (even in original source) and Java 8 Base64 is faster
@@ -136,6 +136,7 @@ Dave Moten came across the Engine821 fork and
 * added pure SSL support to `SMTPServer` builder and a roundtrip unit test
 * added `BDAT` support
 * added support for receiving inbound SMTP connections via a proxy that uses the `PROXY protocol`, built on the HAProxy specification found at https://www.haproxy.org/download/2.3/doc/proxy-protocol.txt
+* and more, see Releases
 
 
 ## Project Authors ##
