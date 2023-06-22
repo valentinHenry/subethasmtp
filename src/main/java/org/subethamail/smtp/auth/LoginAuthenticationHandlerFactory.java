@@ -68,8 +68,7 @@ public final class LoginAuthenticationHandlerFactory implements AuthenticationHa
 		public Optional<String> auth(String clientInput, MessageContext context) throws RejectException
 		{
 			StringTokenizer stk = new StringTokenizer(clientInput);
-			String token = stk.nextToken();
-			if (token.trim().equalsIgnoreCase("AUTH"))
+			if (stk.hasMoreTokens() && stk.nextToken().trim().equalsIgnoreCase("AUTH"))
 			{
 				if (!stk.nextToken().trim().equalsIgnoreCase("LOGIN"))
 				{
