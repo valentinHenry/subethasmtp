@@ -172,7 +172,6 @@ public class AuthTest extends ServerTestCase {
         expect("535");
     }
 
-
     /**
      * Test behaviour of an empty password in login auth.
      */
@@ -192,5 +191,56 @@ public class AuthTest extends ServerTestCase {
 
         send("");
         expect("535");
+    }
+
+    /**
+     * AUTH LOGIN usernames that are not validly base-64 encoded return 501
+     */
+    public void testBadUser() throws Exception {
+        expect("220");
+
+        send("HELO foo.com");
+        expect("250");
+
+        send("AUTH LOGIN");
+        expect("334");
+
+        send("bad-username");
+        expect("501");
+    }
+
+    /**
+     * AUTH LOGIN usernames that are not validly base-64 encoded return 501 when passed inline
+     */
+    public void testBadUserInline() throws Exception {
+        expect("220");
+
+        send("HELO foo.com");
+        expect("250");
+
+        send("AUTH LOGIN bad-username");
+        expect("501");
+    }
+
+    /**
+     * Tests that AUTH LOGIN usernames that are not validly base-64 encoded return
+     * 501
+     */
+    public void testBadPass() throws Exception {
+        expect("220");
+
+        send("HELO foo.com");
+        expect("250");
+
+        send("AUTH LOGIN");
+        expect("334");
+
+        String enc_username = Base64.getEncoder().encodeToString(TextUtils.getAsciiBytes(REQUIRED_USERNAME));
+
+        send(enc_username);
+        expect("334");
+
+        send("bad-password");
+        expect("501");
     }
 }
