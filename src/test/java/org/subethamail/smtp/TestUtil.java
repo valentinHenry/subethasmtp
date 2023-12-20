@@ -31,7 +31,7 @@ import javax.net.ssl.TrustManager;
 
 import org.subethamail.util.ExtendedTrustManager;
 
-import com.sun.mail.util.MailSSLSocketFactory;
+import org.eclipse.angus.mail.util.MailSSLSocketFactory;
 
 class TestUtil {
 
@@ -86,8 +86,10 @@ class TestUtil {
         props.put("mail.smtp.port", PORT + "");
         if (connectionType == ConnectionType.START_TLS) {
             props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.ssl.checkserveridentity", "false");
         } else {
             props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.ssl.checkserveridentity", "false");
         }
         if (username != null) {
             props.setProperty("mail.smtp.submitter", username);
