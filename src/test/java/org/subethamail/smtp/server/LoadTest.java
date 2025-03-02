@@ -2,6 +2,9 @@ package org.subethamail.smtp.server;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.subethamail.smtp.helper.BasicMessageListener;
 
@@ -17,7 +20,7 @@ import jakarta.mail.internet.MimeMultipart;
 
 public class LoadTest {
 
-    private final static int messages = 100000;
+    private final static int messages = 200000;
     private final static int port = 1234;
 
     public static final class Server {
@@ -46,7 +49,8 @@ public class LoadTest {
     }
 
     public static final class Client {
-        public static void main(String[] args) throws MessagingException {
+        
+        public static void main(String[] args) throws MessagingException, InterruptedException {
             String to = "you@yours.com";
             String from = "me@mine.com";
             String host = "localhost";
@@ -54,38 +58,49 @@ public class LoadTest {
             props.put("mail.smtp.host", host);
             props.put("mail.smtp.port", port + "");
 
-            final jakarta.mail.Session session = jakarta.mail.Session.getInstance(props);
-
-            // Create a default MimeMessage object.
-            Message message = new MimeMessage(session);
-
-            // Set From: header field of the header.
-            message.setFrom(new InternetAddress(from));
-
-            InternetAddress[] toAddresses = InternetAddress.parse(to);
-
-            // Set To: header field of the header.
-            message.setRecipients(Message.RecipientType.TO, toAddresses);
-
-            // Create the message part
-            BodyPart messageBodyPart = new MimeBodyPart();
-
-            // Now set the actual message
-            messageBodyPart.setText("This is message body");
-
-            // Create a multipar message
-            Multipart multipart = new MimeMultipart();
-
-            // Set text message part
-            multipart.addBodyPart(messageBodyPart);
-
-            // Send the complete message parts
-            message.setContent(multipart);
+            jakarta.mail.Session session = jakarta.mail.Session.getInstance(props);
+            ExecutorService executor = Executors.newFixedThreadPool(20);
 
             for (int i = 0; i < messages; i++) {
-                message.setSubject("Testing Subject " + i);
-                Transport.send(message);
+                int number = i;
+                executor.submit(() -> {
+                    try {
+                        // Create a default MimeMessage object.
+                        Message message = new MimeMessage(session);
+
+                        // Set From: header field of the header.
+                        message.setFrom(new InternetAddress(from));
+
+                        InternetAddress[] toAddresses = InternetAddress.parse(to);
+
+                        // Set To: header field of the header.
+                        message.setRecipients(Message.RecipientType.TO, toAddresses);
+
+                        // Create the message part
+                        BodyPart messageBodyPart = new MimeBodyPart();
+
+                        // Now set the actual message
+                        messageBodyPart.setText("This is message body");
+
+                        // Create a multipar message
+                        Multipart multipart = new MimeMultipart();
+
+                        // Set text message part
+                        multipart.addBodyPart(messageBodyPart);
+
+                        // Send the complete message parts
+                        message.setContent(multipart);
+
+                        message.setSubject("Testing Subject " + number);
+
+                        Transport.send(message);
+                    } catch (MessagingException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
+            executor.shutdown();
+            executor.awaitTermination(1, TimeUnit.DAYS);
             System.out.println("sent");
         }
     }
