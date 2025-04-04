@@ -24,6 +24,7 @@ import org.subethamail.smtp.DropConnectionException;
 import org.subethamail.smtp.MessageContext;
 import org.subethamail.smtp.MessageHandler;
 import org.subethamail.smtp.internal.io.CRLFTerminatedReader;
+import org.subethamail.smtp.internal.io.Utf8InputStreamReader;
 import org.subethamail.smtp.internal.proxy.ProxyHandler;
 import org.subethamail.smtp.internal.proxy.ProxyHandler.ProxyResult;
 import org.subethamail.smtp.internal.server.ServerThread;
@@ -284,6 +285,13 @@ public final class Session implements Runnable, MessageContext {
                     this.sendResponse(msg);
 
                     // if people are screwing with things, close connection
+                    return;
+                } catch (Utf8InputStreamReader.InvalidUTF8EncodingException ee) {
+                    String msg = "501 Syntax error: invalid character encoding.";
+
+                    log.debug(msg, ee);
+                    this.sendResponse(msg);
+
                     return;
                 }
             }

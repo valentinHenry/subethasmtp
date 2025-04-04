@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 
@@ -17,6 +18,16 @@ import java.nio.charset.StandardCharsets;
  * InputStream from command to command.
  */
 public final class Utf8InputStreamReader extends Reader {
+
+    public static final class InvalidUTF8EncodingException extends IOException {
+        public InvalidUTF8EncodingException(String message) {
+            super(message);
+        }
+
+        public InvalidUTF8EncodingException(IOException cause){
+            super(cause);
+        }
+    }
 
     private final InputStream in;
     private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
@@ -66,13 +77,19 @@ public final class Utf8InputStreamReader extends Reader {
                     throw new EOFException();
                 }
                 if (!isContinuation(a)) {
-                    throw new IOException(
+                    throw new InvalidUTF8EncodingException(
                             "wrong continuation bits, bytes after first in a UTF-8 character must start with bits 10");
                 }
                 bb.put(a);
             }
             bb.flip();
-            CharBuffer r = decoder.decode(bb);
+            CharBuffer r;
+            try {
+                r = decoder.decode(bb);
+            } catch (CharacterCodingException e){
+                throw new InvalidUTF8EncodingException(e);
+            }
+
             int v = r.get();
             if (r.limit() > 1) {
                 leftOver = r.get();
@@ -95,12 +112,12 @@ public final class Utf8InputStreamReader extends Reader {
     }
 
     // VisibleForTesting
-    static int numBytes(int a) throws IOException {
+    static int numBytes(int a) throws InvalidUTF8EncodingException {
         if (!bit(a, 1)) {
             return 1;
         } else {
             if (!bit(a, 2)) {
-                throw new IOException("leading bits 10 illegal for first byte of UTF-8 character");
+                throw new InvalidUTF8EncodingException("leading bits 10 illegal for first byte of UTF-8 character");
             } else if (!bit(a, 3)) {
                 return 2;
             } else {
@@ -110,7 +127,8 @@ public final class Utf8InputStreamReader extends Reader {
                     if (!bit(a, 5)) {
                         return 4;
                     } else {
-                        throw new IOException("leading bits 11111 illegal for first byte of UTF-8 character");
+                        throw new InvalidUTF8EncodingException(
+                                "leading bits 11111 illegal for first byte of UTF-8 character");
                     }
                 }
             }
